@@ -1,26 +1,25 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity ^0.8.13;
 
-contract CustomERC20 {
+import "@openzeppelin/contracts/access/Ownable.sol";
+import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+
+contract CustomERC20 is IERC20, Ownable {
     string public _name;
     string public _symbol;
-    uint256 public _totalSupply;
+    uint256 public _totalSupply = 100 ether;
 
     mapping(address => uint256) private _balances;
     mapping(address => mapping(address => uint256)) private _allowances;
 
-    event Transfer(address indexed from, address indexed to, uint256 value);
-    event Approval(
-        address indexed owner,
-        address indexed spender,
-        uint256 value
-    );
-
-    constructor(string memory name_, string memory symbol_) {
+    constructor(
+        string memory name_,
+        string memory symbol_
+    ) Ownable(msg.sender) {
         _name = name_;
         _symbol = symbol_;
 
-        _mint(msg.sender, 1000000 ether);
+        _mint(msg.sender, _totalSupply);
     }
 
     function _mint(address account, uint256 amount) internal {
@@ -39,6 +38,7 @@ contract CustomERC20 {
     }
 
     function transfer(address to, uint256 value) external returns (bool) {
+        require(to != address(0), "invalid destination");
         require(_balances[msg.sender] >= value, "insufficient funds");
         _balances[msg.sender] -= value;
         _balances[to] += value;
@@ -68,7 +68,16 @@ contract CustomERC20 {
         require(_allowances[from][msg.sender] >= value, "insufficient funds");
         _balances[from] -= value;
         _balances[to] += value;
+        _allowances[from][to] -= value;
+
         emit Transfer(from, to, value);
         return true;
+    }
+
+    receive() external payable {}
+
+    function withdraw() public onlyOwner {
+        (bool sent, ) = payable(owner()).call{value: address(this).balance}("");
+        require(sent, "unable to send funds");
     }
 }
