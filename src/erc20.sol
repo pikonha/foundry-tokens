@@ -4,10 +4,12 @@ pragma solidity ^0.8.13;
 import "@openzeppelin/contracts/access/Ownable.sol";
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 
+uint256 constant INITIAL_SUPPLY = 100 ether;
+
 contract CustomERC20 is IERC20, Ownable {
     string public _name;
     string public _symbol;
-    uint256 public _totalSupply = 100 ether;
+    uint256 public _totalSupply;
 
     mapping(address => uint256) private _balances;
     mapping(address => mapping(address => uint256)) private _allowances;
@@ -19,7 +21,7 @@ contract CustomERC20 is IERC20, Ownable {
         _name = name_;
         _symbol = symbol_;
 
-        _mint(msg.sender, _totalSupply);
+        _mint(msg.sender, INITIAL_SUPPLY);
     }
 
     function _mint(address account, uint256 amount) internal {
